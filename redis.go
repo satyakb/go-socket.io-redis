@@ -3,12 +3,11 @@ package redis
 import (
     "fmt"
     "log"
-    "reflect"
     "strings"
     "github.com/googollee/go-socket.io"
     "github.com/garyburd/redigo/redis"
     "github.com/nu7hatch/gouuid"
-    // "github.com/vmihailenco/msgpack"  // screwed up types after decoded
+    // "github.com/vmihailenco/msgpack"  // screwed up types after decoding
     "encoding/json"
 )
 
@@ -49,26 +48,21 @@ func Redis(opts map[string]string) socketio.BroadcastAdaptor {
     b.prefix = "socket.io"
   }
 
-  pub, err := redis.Dial("tcp", ":" + b.port)
+  pub, err := redis.Dial("tcp", b.host + ":" + b.port)
   if err != nil {
       panic(err)
   }
-  // defer pub.Close()
-  sub, err := redis.Dial("tcp", ":" + b.port)
+  sub, err := redis.Dial("tcp", b.host + ":" + b.port)
   if err != nil {
       panic(err)
   }
-  // defer sub.Close()
-  // var wg sync.WaitGroup
-  // wg.Add(1)
-  // psc := redis.PubSubConn{Conn: c}
 
   b.pub = redis.PubSubConn{Conn: pub}
   b.sub = redis.PubSubConn{Conn: sub}
 
   uid, err := uuid.NewV4();
   if err != nil {
-    fmt.Println("error:", err)
+    log.Println("error generating uid:", err)
     return nil
   }
   b.uid = uid.String()
@@ -76,14 +70,10 @@ func Redis(opts map[string]string) socketio.BroadcastAdaptor {
 
   b.remote = false
 
-  fmt.Println("Key:", b.key)
-
   b.sub.PSubscribe(b.prefix + "#*")
   // This goroutine receives and prints pushed notifications from the server.
-  // The goroutine exits when the connection is unsubscribed from all
-  // channels or there is an error.
+  // The goroutine exits when there is an error.
   go func() {
-      // defer wg.Done()
       for {
           switch n := b.sub.Receive().(type) {
           case redis.Message:
@@ -111,71 +101,29 @@ func (b broadcast) onmessage(channel string, data []byte) error {
   pieces := strings.Split(channel, "#");
   uid := pieces[len(pieces) - 1]
   if b.uid == uid {
-    // some kind of error here
-    fmt.Println("same server")
+    log.Println("ignore same uid")
     return nil
   }
-  fmt.Println("onmessage")
-  fmt.Println("DATA:", data)
+  
   var out map[string][]interface{}
   err := json.Unmarshal(data, &out)
-  fmt.Println(err, out)
-
-  fmt.Println(reflect.TypeOf(out))
-
-  // out, ok := args[len(args)-1].(map[string]interface{})
-  // fmt.Println("OUT:", out)
-  // if !ok {
-  //   return nil
-  // }
-
-  // m, ok := out.(map[string][]interface{})
-  // if !ok {
-  //   fmt.Println("map not okay")
-  //   return nil
-  // }
+  if err != nil {
+    log.Println("error decoding data")
+    return nil
+  }
 
   args := out["args"]
-  fmt.Println("args:", reflect.TypeOf(args))
   opts := out["opts"]
   room, ok := opts[0].(string)
   if !ok {
-    fmt.Println("room didn't work")
+    log.Println("room is not a string")
     room = ""
   }
   message, ok := opts[1].(string)
   if !ok {
-    fmt.Println("message didn't work")
+    log.Println("message is not a string")
     message = ""
   }
-
-  // args, ok := out["args"].([]interface{})
-  // if !ok {
-  //   fmt.Println("args not ok")
-  //   args = nil
-  // }
-
-  // room, ok := out["opts"].(string)
-  // if !ok {
-  //   fmt.Println("room not ok")
-  //   room = "" 
-  // }
-  // str, ok := out["message"].(string)
-  // if !ok {
-  //   fmt.Println("message not ok")
-  //   return nil
-  // }
-  // ignore, ok := out["ignore"].(socketio.Socket)
-  // if !ok {
-  //   fmt.Println("ignore not ok")
-  //   ignore = nil
-  // }
-
-  // rem := map[string]bool{
-  //   "remote": true,
-  // }
-  // args[len(args)-1] = rem
-  fmt.Println("ARGS2:", out)
   
   b.remote = true;
   b.Send(nil, room, message, args)
@@ -208,25 +156,17 @@ func (b broadcast) Leave(room string, socket socketio.Socket) error {
 
 // Same as Broadcast
 func (b broadcast) Send(ignore socketio.Socket, room, message string, args []interface{}) error {
-  fmt.Println("lol here")
-  fmt.Println(args, reflect.TypeOf(args[0]))
   sockets := b.rooms[room]
   for id, s := range sockets {
-    fmt.Println("looping")
     if ignore != nil && ignore.Id() == id {
-      fmt.Println("skipped")
       continue
     }
     err := (s.Emit(message, args...))
     if err != nil {
-      log.Fatal(err)
+      log.Println("error broadcasting:", err)
     }
   }
 
-  // fmt.Println("ARGS:", args...);
-
-  // buf := &bytes.Buffer{}
-  // enc := msgpack.NewEncoder(buf)
   opts := make([]interface{}, 2)
   opts[0] = room
   opts[1] = message
@@ -235,23 +175,8 @@ func (b broadcast) Send(ignore socketio.Socket, room, message string, args []int
     "opts": opts,
   }
 
-  fmt.Println("IN: ", in)
-
-  // append := make([]interface{}, len(args) + 1)
-  // for i := range args {
-  //   append[i] = args[i]
-  // }
-  // append[len(args)] = in
-
   buf, err := json.Marshal(in)
   _ = err
-  
-  // remote := false
-  // rem, ok := args[len(args) - 1].(map[string]bool)
-  // if !ok {
-  //   remote = false
-  // }
-  // remote = rem["remote"]
 
   if !b.remote {
     b.pub.Conn.Do("PUBLISH", b.key, buf)
