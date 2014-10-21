@@ -36,7 +36,7 @@ func Redis(opts map[string]string) socketio.BroadcastAdaptor {
   var ok bool
   b.host, ok = opts["host"]
   if !ok {
-    b.host = "localhost"
+    b.host = "127.0.0.1"
   }
   b.port, ok = opts["port"]
   if !ok {

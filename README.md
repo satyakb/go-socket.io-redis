@@ -61,9 +61,9 @@ func main() {
 
 The following options are allowed:
 
-- `host`: host to connect to redis on (`localhost`)
-- `port`: port to connect to redis on (`6379`)
-- `prefix`: the prefix of the key to pub/sub events on (`socket.io`)
+- `host`: host to connect to redis on (`"localhost"`)
+- `port`: port to connect to redis on (`"6379"`)
+- `prefix`: the prefix of the key to pub/sub events on (`"socket.io"`)
 
 ## References
 
