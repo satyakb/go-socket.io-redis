@@ -1,7 +1,6 @@
 package redis
 
 import (
-    "fmt"
     "log"
     "strings"
     "github.com/googollee/go-socket.io"
@@ -71,24 +70,24 @@ func Redis(opts map[string]string) socketio.BroadcastAdaptor {
   b.remote = false
 
   b.sub.PSubscribe(b.prefix + "#*")
+
   // This goroutine receives and prints pushed notifications from the server.
   // The goroutine exits when there is an error.
   go func() {
       for {
           switch n := b.sub.Receive().(type) {
           case redis.Message:
-              fmt.Printf("Message: %s %s\n", n.Channel, n.Data)
+              log.Printf("Message: %s %s\n", n.Channel, n.Data)
           case redis.PMessage:
-              fmt.Println(n)
               b.onmessage(n.Channel, n.Data)
-              fmt.Printf("PMessage: %s %s %s\n", n.Pattern, n.Channel, n.Data)
+              log.Printf("PMessage: %s %s %s\n", n.Pattern, n.Channel, n.Data)
           case redis.Subscription:
-              fmt.Printf("Subscription: %s %s %d\n", n.Kind, n.Channel, n.Count)
+              log.Printf("Subscription: %s %s %d\n", n.Kind, n.Channel, n.Count)
               if n.Count == 0 {
                   return
               }
           case error:
-              fmt.Printf("error: %v\n", n)
+              log.Printf("error: %v\n", n)
               return
           }
       }
