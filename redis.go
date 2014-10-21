@@ -113,19 +113,24 @@ func (b broadcast) onmessage(channel string, data []byte) error {
 
   args := out["args"]
   opts := out["opts"]
-  room, ok := opts[0].(string)
+  ignore, ok := opts[0].(socketio.Socket)
+  if !ok {
+    log.Println("ignore is not a socket")
+    ignore = nil
+  }
+  room, ok := opts[1].(string)
   if !ok {
     log.Println("room is not a string")
     room = ""
   }
-  message, ok := opts[1].(string)
+  message, ok := opts[2].(string)
   if !ok {
     log.Println("message is not a string")
     message = ""
   }
   
   b.remote = true;
-  b.Send(nil, room, message, args)
+  b.Send(ignore, room, message, args)
   return nil
 }
 
@@ -166,9 +171,10 @@ func (b broadcast) Send(ignore socketio.Socket, room, message string, args []int
     }
   }
 
-  opts := make([]interface{}, 2)
-  opts[0] = room
-  opts[1] = message
+  opts := make([]interface{}, 3)
+  opts[0] = ignore
+  opts[1] = room
+  opts[2] = message
   in := map[string][]interface{}{
     "args": args,
     "opts": opts,
