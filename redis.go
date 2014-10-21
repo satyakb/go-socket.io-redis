@@ -179,7 +179,7 @@ func (b broadcast) Send(ignore socketio.Socket, room, message string, args []int
 
   if !b.remote {
     b.pub.Conn.Do("PUBLISH", b.key, buf)
-    b.remote = false
   }
+  b.remote = false
   return nil
 }
