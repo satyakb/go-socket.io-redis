@@ -24,13 +24,13 @@ import (
 
 func main() {
     server, err := socketio.NewServer(nil)
+    if err != nil {
+        log.Fatal(err)
+    }
 
     opts := make[map[string]string]
     server.SetAdaptor(redis.Redis(opts))
 
-    if err != nil {
-        log.Fatal(err)
-    }
     server.On("connection", func(so socketio.Socket) {
         log.Println("on connection")
         so.Join("chat")
