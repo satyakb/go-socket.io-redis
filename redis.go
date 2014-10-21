@@ -4,7 +4,6 @@ import (
     "fmt"
     "log"
     "reflect"
-    "strconv"
     "strings"
     "github.com/googollee/go-socket.io"
     "github.com/garyburd/redigo/redis"
@@ -15,7 +14,7 @@ import (
 
 type broadcast struct {
   host string
-  port int
+  port string
   pub redis.PubSubConn
   sub redis.PubSubConn
   prefix string
@@ -35,27 +34,27 @@ func Redis(opts map[string]string) socketio.BroadcastAdaptor {
   b := broadcast {
     rooms: make(map[string]map[string]socketio.Socket),
   }
+
   var ok bool
-  var err error
   b.host, ok = opts["host"]
   if !ok {
     b.host = "127.0.0.1"
   }
-  b.port, err = strconv.Atoi(opts["port"])
-  if err != nil {
-    b.port = 6379
+  b.port, ok = opts["port"]
+  if !ok {
+    b.port = "6379"
   }
   b.prefix, ok = opts["prefix"]
   if !ok {
     b.prefix = "socket.io"
   }
 
-  pub, err := redis.Dial("tcp", ":6379")
+  pub, err := redis.Dial("tcp", ":" + b.port)
   if err != nil {
       panic(err)
   }
   // defer pub.Close()
-  sub, err := redis.Dial("tcp", ":6379")
+  sub, err := redis.Dial("tcp", ":" + b.port)
   if err != nil {
       panic(err)
   }
