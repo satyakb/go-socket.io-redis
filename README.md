@@ -57,7 +57,7 @@ func main() {
 
 ## API
 
-### adapter(opts map[string]string)
+### Redis(opts map[string]string)
 
 The following options are allowed:
 
