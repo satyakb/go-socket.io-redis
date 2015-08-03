@@ -159,7 +159,7 @@ func (b broadcast) Leave(room string, socket socketio.Socket) error {
 }
 
 // Same as Broadcast
-func (b broadcast) Send(ignore socketio.Socket, room, message string, args []interface{}) error {
+func (b broadcast) Send(ignore socketio.Socket, room, message string, args ...interface{}) error {
   sockets := b.rooms[room]
   for id, s := range sockets {
     if ignore != nil && ignore.Id() == id {
