@@ -19,7 +19,7 @@ import (
     "log"
     "net/http"
     "github.com/googollee/go-socket.io"
-    "github.com/kowabungappl/go-socket.io-redis"
+    "github.com/satyakb/go-socket.io-redis"
 )
 
 func main() {
