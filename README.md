@@ -9,7 +9,7 @@ events to and from each other.
 Install the package using:
 
 ```bash
-go get "github.com/kowabungappl/go-socket.io-redis"
+go get "github.com/satyakb/go-socket.io-redis"
 ```
 
 Usage:
