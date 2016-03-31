@@ -6,7 +6,8 @@ import (
     "github.com/googollee/go-socket.io"
     "github.com/garyburd/redigo/redis"
     "github.com/nu7hatch/gouuid"
-    "github.com/satyakb/go-socket.io-redis/cmap"
+    "github.com/satyakb/go-socket.io-redis/cmap_string_cmap"
+    "github.com/satyakb/go-socket.io-redis/cmap_string_socket"
     // "github.com/vmihailenco/msgpack"  // screwed up types after decoding
     "encoding/json"
 )
@@ -20,7 +21,7 @@ type broadcast struct {
   uid string
   key string
   remote bool
-  rooms cmap.ConcurrentMap
+  rooms cmap_string_cmap.ConcurrentMap
 }
 
 //
@@ -31,7 +32,7 @@ type broadcast struct {
 // }
 func Redis(opts map[string]string) socketio.BroadcastAdaptor {
   b := broadcast {
-    rooms: cmap.New(),
+    rooms: cmap_string_cmap.New(),
   }
 
   var ok bool
@@ -138,9 +139,9 @@ func (b broadcast) onmessage(channel string, data []byte) error {
 func (b broadcast) Join(room string, socket socketio.Socket) error {
   sockets, ok := b.rooms.Get(room)
   if !ok {
-    sockets = make(map[string]socketio.Socket)
+    sockets = cmap_string_socket.New()
   }
-  sockets[socket.Id()] = socket
+  sockets.Set(socket.Id(), socket)
   b.rooms.Set(room, sockets)
   return nil
 }
@@ -150,8 +151,8 @@ func (b broadcast) Leave(room string, socket socketio.Socket) error {
   if !ok {
     return nil
   }
-  delete(sockets, socket.Id())
-  if len(sockets) == 0 {
+  sockets.Remove(socket.Id())
+  if sockets.IsEmpty() {
     b.rooms.Remove(room)
     return nil
   }
@@ -165,7 +166,9 @@ func (b broadcast) Send(ignore socketio.Socket, room, message string, args ...in
   if !ok {
     return nil
   }
-  for id, s := range sockets {
+  for item := range sockets.Iter() {
+    id := item.Key
+    s := item.Val
     if ignore != nil && ignore.Id() == id {
       continue
     }
