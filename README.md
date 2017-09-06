@@ -28,7 +28,7 @@ func main() {
         log.Fatal(err)
     }
 
-    opts := make[map[string]string]
+    opts := make(map[string]string)
     server.SetAdaptor(redis.Redis(opts))
 
     server.On("connection", func(so socketio.Socket) {
