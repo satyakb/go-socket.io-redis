@@ -146,6 +146,10 @@ func (b broadcast) Join(room string, socket socketio.Socket) error {
   return nil
 }
 
+func (b broadcast) Len(room string) int{
+  return len(b.rooms)
+}
+
 func (b broadcast) Leave(room string, socket socketio.Socket) error {
   sockets, ok := b.rooms.Get(room)
   if !ok {
