@@ -1,13 +1,13 @@
 package redis
 
 import (
+	"log"
+	"strings"
 	"github.com/garyburd/redigo/redis"
 	"github.com/googollee/go-socket.io"
 	"github.com/nu7hatch/gouuid"
 	"github.com/satyakb/go-socket.io-redis/cmap_string_cmap"
 	"github.com/satyakb/go-socket.io-redis/cmap_string_socket"
-	"log"
-	"strings"
 	// "github.com/vmihailenco/msgpack"  // screwed up types after decoding
 	"encoding/json"
 )
