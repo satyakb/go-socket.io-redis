@@ -81,7 +81,7 @@ func Redis(op RedisAdapterConnectOptions) socketio.BroadcastAdaptor {
 	b.pub = redis.PubSubConn{Conn: pub}
 	b.sub = redis.PubSubConn{Conn: sub}
 
-	uid, err := uuid.NewV4();
+	uid, err := uuid.NewV4()
 	if err != nil {
 		log.Println("error generating uid:", err)
 		return nil
@@ -119,7 +119,7 @@ func Redis(op RedisAdapterConnectOptions) socketio.BroadcastAdaptor {
 }
 
 func (b broadcast) onmessage(channel string, data []byte) error {
-	pieces := strings.Split(channel, "#");
+	pieces := strings.Split(channel, "#")
 	uid := pieces[len(pieces)-1]
 	if b.uid == uid {
 		log.Println("ignore same uid")
@@ -151,7 +151,7 @@ func (b broadcast) onmessage(channel string, data []byte) error {
 		message = ""
 	}
 
-	b.remote = true;
+	b.remote = true
 	b.Send(ignore, room, message, args...)
 	return nil
 }
